@@ -1,0 +1,65 @@
+{
+  "name": "tirex-rm",
+  "version": "1.4.0",
+  "main": "main.js",
+  "homepage": "./",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Difz25x/tirex-rm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Difz25x/tirex-rm/issues"
+  },
+  "author": "Difz25x",
+  "license": "MIT",
+  "description": "Roblox Manager v1.4.0",
+  "scripts": {
+    "start": "npx electron .",
+    "build:win": "npx electron-builder --win --x64 --publish never",
+    "release": "npx electron-builder --win --x64 --publish always"
+  },
+  "build": {
+    "appId": "com.difz25x.tirexrm",
+    "productName": "TiRex RM",
+    "electronVersion": "34.0.0",
+    "files": [
+      "index.html",
+      "styles.css",
+      "main.js",
+      "updater.js",
+      "clean.js",
+      "icon.ico",
+      "icon.png",
+      "package.json",
+      "js/**/*",
+      "node_modules/**/*"
+    ],
+    "afterAllArtifactBuild": "./afterAllArtifactBuild.js",
+    "artifactName": "TiRex-RM.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Difz25x",
+        "repo": "tirex-rm",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "executableName": "TiRex-RM",
+      "target": [
+        "nsis"
+      ],
+      "icon": "icon.ico"
+    }
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "autoprefixer": "^10.5.0",
+    "axios": "^1.13.2",
+    "fs-extra": "^11.3.2",
+    "node-fetch": "^3.3.2",
+    "patchright": "^1.60.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0"
+  }
+}

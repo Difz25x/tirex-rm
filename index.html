@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TiRex RM - The Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="app-bg">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Startup Loading Overlay -->
+    <div id="startupLoadingOverlay" class="startup-loading-overlay">
+        <div class="startup-loading-card">
+            <div class="startup-loading-header">
+                <div class="loading-spinner" style="width: 22px; height: 22px; border-width: 3px;"></div>
+                <div class="startup-loading-title">Loading TiRex RM</div>
+            </div>
+            <div id="startupLoadingStep" class="startup-loading-step">Preparing startup sequence...</div>
+            <div class="startup-loading-progress-track">
+                <div id="startupLoadingProgress" class="startup-loading-progress-fill"></div>
+            </div>
+            <div id="startupLoadingPercent" class="startup-loading-percent">0%</div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="notification-container"></div>
+
+    <!-- Update Progress Modal -->
+    <div class="modal" id="updateModal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div style="margin-bottom: 20px;">
+                <div class="loading-spinner" style="width: 40px; height: 40px; border-width: 4px; margin-bottom: 16px;"></div>
+                <h3 class="modal-title" style="margin-bottom: 8px;">Downloading Update...</h3>
+                <p style="color: var(--text-dim); font-size: 13px;" id="updateStatusText">Please wait...</p>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; width: 100%; overflow: hidden; margin-bottom: 12px;">
+                <div id="updateProgressBar" style="background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);" id="updateProgressPercent">0%</div>
+        </div>
+    </div>
+
+    <!-- Floating Top Navbar -->
+    <nav class="top-navbar">
+        <div class="navbar-left">
+            <div class="navbar-logo">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="var(--primary)" />
+                    <path d="M2 17L12 22L22 17" stroke="var(--primary)" stroke-width="2" />
+                    <path d="M2 12L12 17L22 12" stroke="var(--primary)" stroke-width="2" />
+                </svg>
+            </div>
+            <span class="navbar-brand">TiRex RM</span>
+        </div>
+        <div class="navbar-center">
+            <button class="nav-btn active" onclick="switchTab('accounts')" id="navBtn-accounts">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Accounts</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('servers')" id="navBtn-servers">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+                <span>Servers</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('instances')" id="navBtn-instances">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span>Instances</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('console')" id="navBtn-console">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>Console</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('fflags')" id="navBtn-fflags">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>FFlags</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('settings')" id="navBtn-settings">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09"/></svg>
+                <span>Settings</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('robloxs')" id="navBtn-robloxs">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>Versions</span>
+            </button>
+        </div>
+        <div class="navbar-right">
+            <span class="navbar-stat" id="accountCount">0 Accounts</span>
+            <span class="navbar-stat" id="instanceCount">0 Instances</span>
+            <span class="navbar-version">v1.4.0</span>
+            <button class="navbar-update-btn" onclick="checkForUpdates()" title="Check for Updates">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Update
+            </button>
+        </div>
+    </nav>
+
+    <!-- App Content (full-width, no sidebar) -->
+    <div class="app-content">
+        <main class="main-content">
+            <!-- Workspace Header -->
+            <header class="workspace-header">
+                <div class="workspace-header-text">
+                    <div class="workspace-kicker" id="workspaceKicker">Mission Control</div>
+                    <h1 class="workspace-title" id="workspaceTitle">Accounts</h1>
+                    <p class="workspace-subtitle" id="workspaceSubtitle">Manage session readiness, quick sign-in, and launch queues from one calmer surface.</p>
+                </div>
+                <div class="workspace-tab-value" id="workspaceTabValue">Accounts</div>
+            </header>
+
+            <!-- Tab Content Panels -->
+            <div class="tab-panels">
+
+                <!-- ACCOUNTS TAB -->
+                <div class="tab-content active" id="tab-accounts" data-shell-kicker="Mission Control" data-shell-title="Accounts" data-shell-description="Manage session readiness, quick sign-in, and launch queues from one calmer surface.">
+                    <div class="accounts-actions-container">
+                        <button class="btn-primary" onclick="openLoginMethodModal()">+ Add Account</button>
+                        <button class="btn-secondary" id="toggleMultiSelectBtn" onclick="toggleAccountMultiSelectMode()">Select Multiple</button>
+                        <button class="btn-secondary" id="clearSelectedBtn" onclick="clearSelectedAccounts()" style="display: none;" disabled>Clear Selected</button>
+                        <button class="btn-primary" id="launchSelectedBtn" onclick="launchSelectedAccounts()" disabled>Launch Selected</button>
+                        <div class="action-divider"></div>
+                        <input type="search" id="accountSearchInput" class="input-minimal" placeholder="Search accounts..." oninput="setAccountSearch(this.value)" style="width: 200px;" />
+                        <select class="input-minimal" id="accountCookieFilter" onchange="setAccountCookieFilter(this.value)">
+                            <option value="all">All Status</option>
+                            <option value="active">Ready</option>
+                            <option value="inactive">Needs Login</option>
+                        </select>
+                        <button class="btn-secondary btn-icon" onclick="refreshAccounts()" title="Refresh">↻</button>
+                    </div>
+                    <div id="accountsFilterSummary" class="filter-summary"></div>
+                    <div class="grid-container" id="accountsGrid"></div>
+                    <div id="quickSigninPanel" style="display: none;"></div>
+                </div>
+
+                <!-- SERVERS TAB -->
+                <div class="tab-content" id="tab-servers" data-shell-kicker="Network & Lobbies" data-shell-title="Servers" data-shell-description="Snipe low-pop servers or manage quick access to your favorite places.">
+                    <div class="servers-grid-container">
+                        <div class="card">
+                            <h3 class="card-title">Favorites</h3>
+                            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                                <input type="text" class="input-minimal" id="favAlias" placeholder="Alias..." style="flex: 1;">
+                                <input type="text" class="input-minimal" id="favPlaceId" placeholder="Place ID..." style="flex: 1;">
+                                <button class="btn-primary" onclick="addFavoriteGame()">Add</button>
+                            </div>
+                            <div id="favoriteGamesList" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+                        </div>
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                <h3 class="card-title">Public Servers</h3>
+                                <button class="btn-secondary" onclick="loadServerList()">Refresh Servers</button>
+                            </div>
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <input type="text" class="input-minimal" id="placeId" placeholder="Place ID / URL" style="flex: 1;">
+                                <input type="text" class="input-minimal" id="jobId" placeholder="Job ID (optional)" style="flex: 1;">
+                                <input type="text" class="input-minimal" id="privateServerLink" placeholder="Private Server Link" style="flex: 1;">
+                                <button class="btn-primary" onclick="fetchGamePreview()">Fetch</button>
+                                <button class="btn-primary" onclick="joinGame()">Join</button>
+                            </div>
+                            <div id="serverList" style="height: 300px; overflow-y: auto;">
+                                <div style="opacity: 0.5; text-align: center; margin-top: 100px;">Click Refresh to fetch servers</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" id="gamePreview" style="display: none; margin-top: 16px;">
+                        <div style="display: flex; gap: 24px; align-items: center;">
+                            <img id="gameThumbnail" src="" alt="Thumbnail" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover;">
+                            <div style="flex: 1;">
+                                <h2 id="gameName" style="font-size: 18px; margin-bottom: 4px;">Loading...</h2>
+                                <div id="gameCreator" style="color: var(--text-dim); font-size: 12px;">by Creator</div>
+                            </div>
+                            <div style="display: flex; gap: 16px; align-items: center;">
+                                <div style="text-align: right;">
+                                    <div style="color: var(--text-dim); font-size: 10px;">PLAYING</div>
+                                    <div id="gamePlaying" style="font-weight: 600;">0</div>
+                                </div>
+                                <button class="btn-primary" onclick="joinGame()">JOIN GAME</button>
+                            </div>
+                        </div>
+                        <div style="display: none;"><div id="gameDescription"></div><div id="gameMaxPlayers"></div><div id="gameFavorites"></div><div id="gameVisits"></div><div id="gameGenre"></div><div id="gameUpdated"></div><div id="gameLikes"></div></div>
+                    </div>
+                </div>
+
+                <!-- INSTANCES TAB -->
+                <div class="tab-content" id="tab-instances" data-shell-kicker="Runtime Monitor" data-shell-title="Instances" data-shell-description="Track active launches, guard health, and per-instance recovery settings.">
+                    <div class="toolbar">
+                        <div class="toolbar-group">
+                            <h3 class="toolbar-title">Running Instances</h3>
+                            <div id="guardStatus" class="guard-status stopped" title="Guard status not loaded">
+                                <span class="guard-dot"></span>
+                                <span id="guardStatusText">Guard: Standby</span>
+                            </div>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="btn btn-secondary btn-icon" onclick="refreshInstances()" title="Refresh">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="instancesContainer" style="margin-top: 24px">
+                        <div class="empty-state">
+                            <div class="empty-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.3"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                            <div class="empty-text">No Roblox instances running</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CONSOLE TAB -->
+                <div class="tab-content" id="tab-console" data-shell-kicker="Log Relay" data-shell-title="Console" data-shell-description="Filter live output, pause the stream, and inspect launch or auth events.">
+                    <div class="console-shell">
+                        <div class="console-toolbar">
+                            <div class="console-toolbar-group">
+                                <select id="consoleCategoryFilter" class="form-select" style="width: 170px; padding: 10px 14px;" onchange="changeConsoleCategoryFilter(this.value)">
+                                    <option value="all">All Categories</option><option value="Info">Info</option><option value="Success">Success</option><option value="Processing">Processing</option><option value="Retrying">Retrying</option><option value="Failed">Failed</option><option value="Warning">Warning</option>
+                                </select>
+                                <input id="consoleSearchInput" class="form-input" type="text" placeholder="Search log text / source..." style="width: 260px; padding: 10px 12px;" oninput="updateConsoleSearch(this.value)" />
+                            </div>
+                            <div class="console-toolbar-group">
+                                <span class="console-counter" id="consoleStats">0 / 0</span>
+                                <button class="btn btn-secondary" id="consolePauseBtn" onclick="toggleConsolePause()" style="padding: 8px 14px; font-size: 12px;">Pause</button>
+                                <button class="btn btn-secondary" id="consoleAutoScrollBtn" onclick="toggleConsoleAutoScroll()" style="padding: 8px 14px; font-size: 12px;">Auto Scroll: ON</button>
+                                <button class="btn btn-danger" onclick="clearConsoleLogs()" style="padding: 8px 14px; font-size: 12px;">Clear</button>
+                            </div>
+                        </div>
+                        <div id="consoleLogView" class="console-view"><div class="console-empty">No logs yet...</div></div>
+                    </div>
+                </div>
+
+                <!-- FFLAGS TAB -->
+                <div class="tab-content" id="tab-fflags" data-shell-kicker="Performance Lab" data-shell-title="FFlags" data-shell-description="Adjust graphics, memory, and recovery flags with clearer grouping.">
+                    <div class="settings-grid">
+                        <!-- Left Column -->
+                        <div class="settings-col">
+                            <div class="setting-group">
+                                <div class="setting-group-header">
+                                    <h3 class="setting-group-title">FPS Unlocker</h3>
+                                    <label class="switch-toggle"><input type="checkbox" id="fpsUnlockerToggle" checked onchange="document.getElementById('fpsControls').style.opacity = this.checked ? '1' : '0.4'; document.getElementById('fpsControls').style.pointerEvents = this.checked ? 'auto' : 'none'; saveFFlags();"><span class="slider-round"></span></label>
+                                </div>
+                                <p class="setting-group-desc">Override the default 60 FPS limit for smoother gameplay.</p>
+                                <div id="fpsControls" style="transition: opacity 0.2s;">
+                                    <input type="range" min="30" max="360" value="60" class="range-slider" id="fpsSlider" oninput="document.getElementById('fpsValue').textContent = this.value" onchange="saveFFlags()">
+                                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 4px;"><span>30</span><span>144</span><span>240</span><span>360</span></div>
+                                    <div class="setting-row" style="margin-top: 12px;">
+                                        <div><div class="setting-row-title">Selected Limit</div><div class="setting-row-desc">Applied on next launch</div></div>
+                                        <div class="setting-value-badge"><span id="fpsValue" style="font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--success);">60</span> <span style="font-size: 11px; color: var(--text-dim);">FPS</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Quick Optimizations</h3></div>
+                                <p class="setting-group-desc">Low-cost visual and audio tweaks for better performance.</p>
+                                <div class="setting-row"><div><div class="setting-row-title">Disable Shadows</div><div class="setting-row-desc">Removes dynamic shadows</div></div><label class="switch-toggle"><input type="checkbox" id="toggleDisableShadows" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title">No Textures</div><div class="setting-row-desc">Use flat colors for performance</div></div><label class="switch-toggle"><input type="checkbox" id="toggleNoTextures" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title">Lower Quality Audio</div><div class="setting-row-desc">Reduce audio memory usage</div></div><label class="switch-toggle"><input type="checkbox" id="toggleLowQualityAudio" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Memory Optimization</h3></div>
+                                <p class="setting-group-desc">Stability and memory control settings.</p>
+                                <div class="setting-row"><div><div class="setting-row-title">Close Crash Handler</div><div class="setting-row-desc">Close RobloxCrashHandler on launch</div></div><label class="switch-toggle"><input type="checkbox" id="toggleCloseCrashHandler" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title">Memory Trim</div><div class="setting-row-desc">Trim Roblox working set periodically</div></div><label class="switch-toggle"><input type="checkbox" id="toggleMemoryTrim" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title">Memory Trim Interval</div><div class="setting-row-desc">5 - 300 seconds</div></div><input type="number" class="form-input" id="memoryTrimInterval" min="5" max="300" step="5" value="60" onchange="saveFFlags()" style="width: 80px; text-align: center;"></div>
+                                <div class="setting-row"><div><div class="setting-row-title">System Memory Cleaner</div><div class="setting-row-desc">Background cleanup schedule</div></div><select class="form-select" id="systemMemoryCleaner" onchange="saveFFlags()" style="width: 120px;"><option value="never">Never</option><option value="30">Every 30s</option><option value="60">Every 60s</option><option value="120">Every 120s</option></select></div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="settings-col">
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Rendering API</h3></div>
+                                <p class="setting-group-desc">Choose your preferred graphics backend.</p>
+                                <div class="renderer-grid">
+                                    <div class="render-card active" data-renderer="d3d11" onclick="selectRenderer(this, 'd3d11')"><div style="font-weight: 600; font-size: 13px;">Direct3D 11</div><div style="font-size: 10px; color: var(--text-dim);">Default for Windows</div></div>
+                                    <div class="render-card" data-renderer="vulkan" onclick="selectRenderer(this, 'vulkan')"><div style="font-weight: 600; font-size: 13px;">Vulkan</div><div style="font-size: 10px; color: var(--text-dim);">High-performance</div></div>
+                                    <div class="render-card" data-renderer="opengl" onclick="selectRenderer(this, 'opengl')"><div style="font-weight: 600; font-size: 13px;">OpenGL</div><div style="font-size: 10px; color: var(--text-dim);">Compatibility</div></div>
+                                </div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Experimental Flags</h3></div>
+                                <p class="setting-group-desc">Advanced engine presets and diagnostics.</p>
+                                <div id="advancedFflagsList"></div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Auto-Reopen</h3></div>
+                                <p class="setting-group-desc">Crash recovery defaults for new launches.</p>
+                                <div class="setting-row"><div><div class="setting-row-title">Enable Auto-Reopen</div><div class="setting-row-desc">Relaunch if Roblox crashes</div></div><label class="switch-toggle"><input type="checkbox" id="toggleAutoReopen" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title">Pre-release Updates</div><div class="setting-row-desc">Detect Alpha/Beta from GitHub</div></div><label class="switch-toggle"><input type="checkbox" id="toggleAllowPrerelease" onchange="saveFFlags()"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title">Reopen Delay</div><div class="setting-row-desc">Wait time before relaunch (ms)</div></div><input type="number" class="form-input" id="reopenDelay" min="500" max="10000" step="500" value="2000" onchange="saveFFlags()" style="width: 90px; text-align: center;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SETTINGS TAB -->
+                <div class="tab-content" id="tab-settings" data-shell-kicker="Environment" data-shell-title="Settings" data-shell-description="Tune app behavior, client paths, fonts, and capture defaults from one lane.">
+                    <div class="settings-grid">
+                        <!-- Left Column -->
+                        <div class="settings-col">
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Roblox Versions</h3></div>
+                                <p class="setting-group-desc">Build and update management.</p>
+                                <div class="setting-row"><div class="setting-row-title">Installed</div><div id="installedVersion" style="font-family: var(--font-mono); color: var(--success); font-size: 13px;">Checking...</div></div>
+                                <div class="setting-row"><div class="setting-row-title">Latest</div><div id="latestVersion" style="font-family: var(--font-mono); color: var(--primary); font-size: 13px;">Checking...</div></div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;"><button class="btn btn-secondary" onclick="checkRobloxVersions()">Refresh</button><button class="btn btn-primary" onclick="downloadLatestRoblox()">Update</button></div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Directory Path</h3></div>
+                                <p class="setting-group-desc">Roblox installation source.</p>
+                                <div style="margin-bottom: 12px;">
+                                    <div class="setting-row-desc" style="margin-bottom: 4px;">Current Primary</div>
+                                    <div id="currentRobloxPath" style="font-size: 12px; color: var(--text-secondary); word-break: break-all; line-height: 1.5; padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);">Loading...</div>
+                                </div>
+                                <div style="margin-bottom: 12px;">
+                                    <div class="setting-row-desc" style="margin-bottom: 4px; color: var(--primary);">Custom Override</div>
+                                    <div id="customRobloxPath" style="font-size: 12px; color: var(--text-secondary); word-break: break-all; padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);">Not set</div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;"><button class="btn btn-secondary" onclick="selectCustomRobloxPath()">Select</button><button class="btn btn-secondary" onclick="clearCustomRobloxPath()">Clear</button><button class="btn btn-secondary" onclick="viewRobloxPathInExplorer()">Explore</button></div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Data Storage</h3></div>
+                                <p class="setting-group-desc">Backup and persistence management.</p>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;"><button class="btn btn-secondary" onclick="exportAccounts()">Export</button><button class="btn btn-secondary" onclick="importAccounts()">Import</button></div>
+                                <button class="btn btn-danger" onclick="clearAllData()" style="width: 100%; padding: 12px; border-style: dashed; background: transparent; color: var(--error); font-weight: 700;">RESET ALL DATA</button>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="settings-col">
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Privacy & Protection</h3></div>
+                                <p class="setting-group-desc">Security and capture settings.</p>
+                                <div class="setting-row"><div><div class="setting-row-title">Hide Capture</div><div class="setting-row-desc">Antigravity Mode</div></div><label class="switch-toggle"><input type="checkbox" id="hideCaptureToggle" onchange="toggleHideCapture(this.checked)"><span class="slider-round"></span></label></div>
+                                <div class="setting-row"><div><div class="setting-row-title" style="color: var(--success);">Auto-Reopen</div><div class="setting-row-desc">Global default for new launches</div></div><label class="switch-toggle"><input type="checkbox" id="globalAutoReopenToggle" checked onchange="saveSettings({autoReopen: this.checked})"><span class="slider-round"></span></label></div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Session Management</h3></div>
+                                <p class="setting-group-desc">Rejoin your latest Roblox server.</p>
+                                <div class="setting-row"><div><div class="setting-row-title" style="color: var(--primary);">Auto Rejoin</div><div class="setting-row-desc">Automatically allow session rejoin flow</div></div><label class="switch-toggle"><input type="checkbox" id="toggleAutoRejoinSession" onchange="saveSettings({ autoRejoinLastSession: this.checked }); updateSessionRejoinUi();"><span class="slider-round"></span></label></div>
+                                <button class="btn btn-primary" id="rejoinLastSessionBtn" onclick="rejoinLastSession()" style="width: 100%; margin-top: 8px;">Rejoin Now</button>
+                                <div id="lastSessionMeta" class="setting-row-desc" style="margin-top: 8px;">Last session: not loaded</div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Visual Stylizer</h3></div>
+                                <p class="setting-group-desc">UI personalization and fonts.</p>
+                                <div class="setting-row"><div class="setting-row-title">App Font</div><select class="form-select" id="appFontSelect" onchange="applyAppFont(this.value)" style="width: 130px;"><option value="Inter">Inter</option><option value="Arial">Arial</option><option value="Consolas">Consolas</option><option value="Segoe UI">Segoe UI</option></select></div>
+                                <div style="margin-top: 12px;">
+                                    <div class="setting-row-title" style="margin-bottom: 8px;">Roblox Font Engine</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;"><button class="btn btn-secondary" onclick="selectAndApplyRobloxFont()">Swap</button><button class="btn btn-secondary" onclick="restoreRobloxFont()">Restore</button></div>
+                                    <div style="padding: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);"><div style="font-size: 11px; color: var(--text-dim); margin-bottom: 2px;">Active:</div><div id="selectedRobloxFontPath" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">None</div></div>
+                                </div>
+                                <div style="margin-top: 12px;">
+                                    <div class="setting-row-desc" style="margin-bottom: 4px;">Engine Fonts Path</div>
+                                    <div id="detectedRobloxFontsPath" style="font-size: 12px; color: var(--text-dim); word-break: break-all;">Scanning...</div>
+                                </div>
+                            </div>
+
+                            <div class="setting-group">
+                                <div class="setting-group-header"><h3 class="setting-group-title">Information</h3></div>
+                                <p class="setting-group-desc" style="margin-bottom: 0;">TiRex RM v1.4.0 &mdash; Designed and developed by <span style="color: var(--primary); font-weight: 600;">Difz25x</span>. Advanced Roblox management made easy.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VERSIONS TAB (hidden nav - accessible via Settings) -->
+                <div class="tab-content" id="tab-robloxs" data-shell-kicker="Build Control" data-shell-title="Versions" data-shell-description="Check live channels, compare installed clients, and deploy the right version.">
+                    <div class="form-section version-manager-shell">
+                        <h3 style="font-size: 18px; margin-bottom: 20px; color: var(--primary);">Roblox Version Manager</h3>
+                        <div class="version-dashboard">
+                            <div class="v-dash-stat"><div class="v-dash-label">Current Live Version</div><div class="v-dash-value" id="dashLiveVersion">Checking...</div><div class="v-dash-sub" style="color: var(--success)"><div class="stat-dot" style="background: var(--success); width: 6px; height: 6px;"></div>Latest Deployment</div></div>
+                            <div class="v-dash-stat version-dash-stat-split" style="border-left: 1px solid var(--border); padding-left: 24px;">
+                                <div class="v-dash-label">Your Installation</div>
+                                <div style="display: flex; align-items: center; justify-content: space-between;"><div><div class="v-dash-value" id="dashInstalledVersion">Checking...</div><div class="v-dash-sub" id="dashStatusText">Checking status...</div></div>
+                                <div style="display: flex; gap: 12px;"><button class="btn btn-secondary" onclick="checkRobloxVersionsFull()" title="Refresh Info"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button><button class="btn btn-primary" onclick="handleDashboardLiveVersionAction()" id="dashUpdateBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Update Live</button></div></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section version-list-shell">
+                        <div class="version-list-toolbar" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <h3 style="font-size: 18px; color: var(--primary); margin: 0;">Available Versions</h3>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;"><div id="versionsSearchCount" style="font-size: 12px; color: var(--text-dim)">From DeployHistory.txt</div><input type="text" class="form-input" id="versionsSearchInput" placeholder="Search version..." oninput="handleVersionSearchInput(this.value)" style="width: 220px; padding: 8px 12px; font-size: 12px;" /><button class="btn btn-secondary" onclick="clearVersionSearch()" style="padding: 8px 10px; font-size: 11px;">Clear</button></div>
+                        </div>
+                        <div id="versionsList" style="max-height: 400px; overflow-y: auto"></div>
+                    </div>
+                </div>
+
+                <!-- UTILITIES TAB (hidden nav - accessible from settings or direct) -->
+                <div class="tab-content" id="tab-utilities" data-shell-kicker="Account Tools" data-shell-title="Utilities" data-shell-description="Jump into profile actions and account-side tasks without leaving the manager.">
+                    <div class="form-section">
+                        <h3 style="font-size: 18px; margin-bottom: 20px; color: var(--primary);">Utility Tools</h3>
+                        <div class="form-group"><label class="form-label">Select Account</label><select class="form-select" id="utilityAccountSelect"><option value="">Choose account...</option></select></div>
+                        <div class="utility-grid">
+                            <button class="btn btn-primary" onclick="openRobloxHome()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Open Roblox Home</button>
+                            <button class="btn btn-primary" onclick="openProfile()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Open Profile</button>
+                            <button class="btn btn-primary" onclick="openAvatarEditor()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Open Avatar Editor</button>
+                            <button class="btn btn-primary" onclick="openInventory()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Open Inventory</button>
+                            <button class="btn btn-primary" onclick="openFriendsPage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6"/><path d="M23 11h-6"/></svg>Open Friends</button>
+                            <button class="btn btn-primary" onclick="openMessagesPage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Open Messages</button>
+                            <button class="btn btn-primary" onclick="openCatalogPage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12"/><path d="M12 2v20"/><path d="M6 22h12"/><path d="M5 6h14"/><path d="M5 18h14"/></svg>Open Catalog</button>
+                            <button class="btn btn-primary" onclick="openGroupsPage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M17 11a4 4 0 1 0-3.5-6"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M14 17h8"/><path d="M18 13v8"/></svg>Open Groups</button>
+                            <button class="btn btn-primary" onclick="openTradesPage()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Open Trades</button>
+                            <button class="btn btn-secondary" onclick="copySelectedUserId()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy User ID</button>
+                        </div>
+                        <div class="form-group" style="margin-top: 20px"><label class="form-label">User ID to Follow</label><div style="display: flex; gap: 12px"><input type="text" class="form-input" id="followUserId" placeholder="Enter User ID" style="flex: 1" /><button class="btn btn-primary" onclick="followUser()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Follow</button></div></div>
+                        <div class="form-group" style="margin-top: 20px"><label class="form-label">Add Connections (Friend Request)</label><div style="display: flex; gap: 12px"><input type="text" class="form-input" id="friendRequestUserId" placeholder="Enter User ID or URL" style="flex: 1" /><button class="btn btn-primary" onclick="sendFriendRequest()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>Add Friend</button></div></div>
+                    </div>
+                </div>
+
+                <!-- ABOUT TAB -->
+                <div class="tab-content" id="tab-about" data-shell-kicker="Project Notes" data-shell-title="About" data-shell-description="Reference version info, credits, and the current app identity.">
+                    <div class="about-shell" style="max-width: 1000px; margin: 0 auto">
+                        <div class="about-hero">
+                            <div class="about-logo-wrapper"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.5"><path d="M12 2L2 7L12 12L22 7L12 2Z" fill="var(--primary)" fill-opacity="0.2" /><path d="M2 17L12 22L22 17" stroke-width="2" /><path d="M2 12L12 17L22 12" stroke-width="2" /></svg></div>
+                            <h1 class="about-title">TiRex RM</h1>
+                            <div class="about-version-badge">Version 1.4.0</div>
+                            <p class="about-hero-copy" style="font-size: 18px; color: var(--text-dim); max-width: 700px; margin: 0 auto; line-height: 1.6;">The ultimate premium account manager for Roblox. Built for speed, efficiency, and absolute management.</p>
+                        </div>
+                        <div class="about-feature-grid">
+                            <div class="about-feature-card"><div class="about-feature-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><h3 class="fflag-title">Multi-Account</h3><p class="fflag-subtitle">Manage unlimited identities with secure cookie and encryption support.</p></div>
+                            <div class="about-feature-card"><div class="about-feature-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><h3 class="fflag-title">Multi-Instance</h3><p class="fflag-subtitle">Advanced mutex bypass technology for simultaneous multi-client execution.</p></div>
+                            <div class="about-feature-card"><div class="about-feature-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/></svg></div><h3 class="fflag-title">Hyperion Aware</h3><p class="fflag-subtitle">Optimized for latest client architecture with built-in version management.</p></div>
+                            <div class="about-feature-card"><div class="about-feature-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3 class="fflag-title">Secure & Encrypted</h3><p class="fflag-subtitle">Your .ROBLOSECURITY cookies are kept safe using hardware-bound security keys.</p></div>
+                        </div>
+                        <div class="about-credits-section">
+                            <div style="text-align: center; margin-bottom: 24px;"><h3 style="font-size: 18px; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Development & Credits</h3></div>
+                            <div class="about-credits-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                                <div class="fflag-stack"><div class="fflag-option-title">Lead Developer</div><div style="color: var(--primary); font-weight: 800; font-size: 18px; margin-top: 4px;">Difz25x</div></div>
+                                <div class="fflag-stack"><div class="fflag-option-title">Distribution</div><div style="color: var(--text); font-weight: 700; font-size: 16px; margin-top: 4px;">Open Source (MIT)</div></div>
+                                <div class="fflag-stack"><div class="fflag-option-title">Technology</div><div class="tech-badge-container" style="justify-content: flex-start;"><span class="tech-badge">Electron</span><span class="tech-badge">Node.js</span></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Instance Settings Modal -->
+    <div id="instanceSettingsModal" class="modal">
+        <div class="modal-content" style="max-width: 500px">
+            <div class="modal-header"><div class="modal-title">Instance Settings</div><button class="modal-close" onclick="closeInstanceSettings()">X</button></div>
+            <div id="instanceSettingsContent"><div style="text-align: center; padding: 20px;"><div class="loading-spinner"></div></div></div>
+        </div>
+    </div>
+
+    <!-- Download Modal -->
+    <div class="modal" id="downloadModal">
+        <div class="modal-content download-modal-content">
+            <div class="modal-header"><div class="modal-title">Downloading Roblox</div></div>
+            <div class="modal-body download-modal-body">
+                <div id="downloadStatus" class="download-status">Preparing...</div>
+                <div class="download-progress-wrap"><div id="downloadProgressBar" class="download-progress-bar"></div><div id="downloadProgressTextOverlay" class="download-progress-text">0%</div></div>
+                <div class="download-meta-row"><span id="downloadCurrent">0 / 0</span><span id="downloadPercentLabel">Package Progress</span></div>
+                <div id="downloadInfo" class="download-info-card"><div class="download-file-name">Preparing files...</div><div class="download-info-line">Waiting for download to start</div><div class="download-info-line">Package 0 of 0</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Method Modal -->
+    <div class="modal" id="loginMethodModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><div class="modal-title">Add Account</div><button class="modal-close" onclick="closeLoginMethodModal()" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 12px;">
+                <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 4px;">Choose a login method to add an account.</p>
+                <button class="btn btn-primary" onclick="openLoginModalFromMethod()">Auto Login</button>
+                <button class="btn btn-secondary" onclick="openBrowserLogin()">Browser Login</button>
+                <button class="btn btn-secondary" onclick="openCodeLoginModalFromMethod()">Code Login</button>
+                <button class="btn btn-secondary" onclick="openManualAccount()">Manual Login</button>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeLoginMethodModal()">Cancel</button></div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><div class="modal-title">Roblox Login</div><button class="modal-close" onclick="closeLoginModal()" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="modal-body">
+                <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px;">Username and password are used only for auto-login and are not stored.</p>
+                <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="loginUsername" placeholder="RobloxUsername" /></div>
+                <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="loginPassword" placeholder="Enter password" /></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeLoginModal()">Cancel</button><button class="btn btn-primary" onclick="startAutoLogin()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>Auto Login & Capture Cookie</button></div>
+        </div>
+    </div>
+
+    <!-- Code Login Modal -->
+    <div class="modal" id="codeLoginModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><div class="modal-title">Code Login</div><button class="modal-close" onclick="closeCodeLoginModal()" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="modal-body">
+                <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px;">Optional: enter temporary/recovery code. If left empty, app opens Quick Sign-in and keeps one active code at a time (auto-refresh every 5 minutes).</p>
+                <div class="form-group"><label class="form-label">Code</label><input type="text" class="form-input" id="loginCodeInput" placeholder="Optional code (leave blank for Quick Sign-in)" /></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeCodeLoginModal()">Cancel</button><button class="btn btn-primary" onclick="startCodeLogin()">Start Code Login</button></div>
+        </div>
+    </div>
+
+    <!-- Account Modal -->
+    <div class="modal" id="accountModal">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title" id="modalTitle">Add Account</div><button class="modal-close" onclick="closeAccountModal()">X</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="modalUsername" placeholder="RobloxUsername" /></div>
+                <div class="form-group"><label class="form-label">Alias (Optional)</label><input type="text" class="form-input" id="modalAlias" placeholder="My Main Account" /></div>
+                <div class="form-group"><label class="form-label">Account Type</label><select class="form-select" id="modalType"><option value="Main Account">Main Account</option><option value="Alt Account">Alt Account</option></select></div>
+                <div class="form-group"><label class="form-label">Description (Optional)</label><textarea class="form-textarea" id="modalDescription" placeholder="Account notes..."></textarea></div>
+                <div class="form-group"><label class="form-label">.ROBLOSECURITY Cookie</label><textarea class="form-textarea" id="modalCookie" placeholder="_|WARNING:-DO-NOT-SHARE-THIS... or full cookie bundle" style="min-height: 80px; font-family: var(--font-mono); font-size: 11px;"></textarea></div>
+            </div>
+            <div class="modal-footer modal-footer-balanced">
+                <button class="btn btn-danger" onclick="deleteAccount()" id="deleteBtn" style="display: none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Delete</button>
+                <div class="footer-group-right">
+                    <button class="btn btn-secondary" onclick="closeAccountModal()">Cancel</button>
+                    <button class="btn btn-secondary" onclick="launchAccountFromModal({ forceAutoReopen: true })" id="reopenModalBtn" style="display: none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg> Reopen</button>
+                    <button class="btn btn-primary" onclick="launchAccountFromModal()" id="launchModalBtn" style="display: none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> Launch</button>
+                    <button class="btn btn-primary" onclick="saveAccount()" id="saveBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Account Selection Modal -->
+    <div class="modal" id="mainAccountSelectionModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><div class="modal-title" id="mainAccountSelectionTitle">Select Main Account</div><button class="modal-close" onclick="closeMainAccountSelectionModal()" id="mainAccountSelectionCloseBtn">X</button></div>
+            <div class="modal-body">
+                <p style="color: var(--text-dim); font-size: 13px; line-height: 1.5; margin-bottom: 14px;" id="mainAccountSelectionDescription">Choose which account should keep the Main role.</p>
+                <div class="form-group"><label class="form-label">Main Account</label><select class="form-select" id="mainAccountSelectionInput"></select></div>
+                <div style="font-size: 12px; color: var(--warning);" id="mainAccountSelectionNote">Exactly one account must be marked as Main.</div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeMainAccountSelectionModal()" id="mainAccountSelectionCancelBtn">Cancel</button><button class="btn btn-primary" onclick="confirmMainAccountSelection()" id="mainAccountSelectionConfirmBtn">Set Main</button></div>
+        </div>
+    </div>
+
+    <!-- Quick Signin Confirm Modal -->
+    <div class="modal" id="quickSigninConfirmModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><div class="modal-title">Quick Sign In Confirm</div><button class="modal-close" onclick="closeQuickSigninConfirmModal()">X</button></div>
+            <div class="modal-body">
+                <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px;">Use cookie from selected account to confirm Quick Sign-in code.</p>
+                <div style="font-size: 12px; color: var(--primary); margin-bottom: 12px;" id="quickSigninConfirmTargetLabel">Selected account</div>
+                <div class="form-group"><label class="form-label">Quick Sign-in Code</label><input type="text" class="form-input" id="quickSigninConfirmCodeInput" placeholder="6-character code" maxlength="6" /></div>
+                <div class="form-group"><label class="form-label">Cookie for Confirmation</label><textarea class="form-textarea" id="quickSigninConfirmCookieInput" placeholder=".ROBLOSECURITY=...; .RBXIDCHECK=..."></textarea></div>
+                <div id="quickSigninConfirmStatus" class="quick-signin-confirm-status"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeQuickSigninConfirmModal()">Cancel</button><button class="btn btn-primary" id="quickSigninConfirmSubmitBtn" onclick="submitQuickSigninConfirm()">Confirm Code</button></div>
+        </div>
+    </div>
+
+    <!-- Account Launch Select Modal -->
+    <div class="modal" id="accountLaunchSelectModal">
+        <div class="modal-content" style="max-width: 560px;">
+            <div class="modal-header"><div class="modal-title" id="accountLaunchSelectTitle">Select Account(s)</div><button class="modal-close" onclick="closeAccountLaunchSelectModal()">X</button></div>
+            <div class="modal-body">
+                <div id="accountLaunchSelectDescription" style="margin-bottom: 14px; color: var(--text-dim); font-size: 13px;">Select one or more accounts to continue.</div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" onclick="selectAllLaunchAccounts()" id="launchSelectAllBtn">Select All</button>
+                    <button class="btn btn-secondary" onclick="clearLaunchAccountSelection()">Clear</button>
+                    <span id="launchSelectedCountLabel" style="font-size: 12px; color: var(--primary); font-weight: 600; margin-left: auto;">0 selected</span>
+                </div>
+                <div id="accountLaunchSelectList" class="launch-account-list"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeAccountLaunchSelectModal()">Cancel</button><button class="btn btn-primary" id="accountLaunchConfirmBtn" onclick="confirmAccountLaunchSelection()" disabled>Continue</button></div>
+        </div>
+    </div>
+
+    <!-- Version Select Modal -->
+    <div class="modal" id="versionSelectModal">
+        <div class="modal-content">
+            <div class="modal-header"><div class="modal-title" id="versionSelectTitle">Select Roblox Version</div><button class="modal-close" onclick="closeVersionSelectModal()">X</button></div>
+            <div class="modal-body">
+                <div style="margin-bottom: 16px; color: var(--text-dim); font-size: 13px;" id="versionSelectDescription">Multiple Roblox versions detected. Select which version to launch:</div>
+                <div id="versionSelectList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reinstall Modal -->
+    <div class="modal" id="reinstallModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header"><div class="modal-title">Confirm Re-install</div><button class="modal-close" onclick="closeReinstallModal()">X</button></div>
+            <div class="modal-body">
+                <p style="color: var(--text-dim); font-size: 14px; line-height: 1.5; margin-bottom: 16px;">Are you sure you want to re-install version <strong id="reinstallVersionDisplay" style="color: var(--text-normal);"></strong>?</p>
+                <div style="background: rgba(255, 170, 0, 0.1); border: 1px solid rgba(255, 170, 0, 0.2); border-radius: var(--radius-md); padding: 12px; display: flex; gap: 12px; align-items: flex-start;">
+                    <div style="color: var(--warning); padding-top: 2px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                    <div style="font-size: 13px; color: var(--text-normal);">This will <strong>delete</strong> the existing installation files and download a fresh copy.</div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeReinstallModal()">Cancel</button><button class="btn btn-primary" onclick="confirmReinstall()" id="confirmReinstallBtn">Confirm & Re-install</button></div>
+        </div>
+    </div>
+
+    <!-- JS Modules (load order matters: shared first, app last) -->
+    <script src="js/shared.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/console.js"></script>
+    <script src="js/accounts.js"></script>
+    <script src="js/servers.js"></script>
+    <script src="js/instances.js"></script>
+    <script src="js/fflags.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/utilities.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

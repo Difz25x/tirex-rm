@@ -1,0 +1,30 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.difz25x.tirexrm
+productName: TiRex RM
+electronVersion: 34.0.0
+files:
+  - filter:
+      - index.html
+      - styles.css
+      - main.js
+      - updater.js
+      - clean.js
+      - icon.ico
+      - icon.png
+      - package.json
+      - js/**/*
+      - node_modules/**/*
+afterAllArtifactBuild: ./afterAllArtifactBuild.js
+artifactName: TiRex-RM.${ext}
+publish:
+  - provider: github
+    owner: Difz25x
+    repo: tirex-rm
+    releaseType: release
+win:
+  executableName: TiRex-RM
+  target:
+    - nsis
+  icon: icon.ico
