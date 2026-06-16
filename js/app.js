@@ -119,7 +119,7 @@ function bindIpcListeners() {
 }
 
 // ─── Startup Sequence ────────────────────────────────────────────────────────
-const STARTUP_SAFETY_TIMEOUT_MS = 30000; // Force-hide overlay after 30s max
+const STARTUP_SAFETY_TIMEOUT_MS = 15000; // Force-hide overlay after 15s max
 
 let startupSafetyTimer = setTimeout(() => {
     console.warn("[Startup] Safety timeout reached — forcing overlay hide");
@@ -131,8 +131,7 @@ async function init() {
     const runStartupStep = async (label, percent, work) => { setStartupLoadingProgress(label, percent); try { await work(); } catch (error) { startupErrors.push({ label, error }); console.error(`[Startup] ${label} failed:`, error); } };
 
     try {
-        await runStartupStep("Checking for updates...", 5, async () => { checkForUpdates(); });
-        await runStartupStep("Initializing app console...", 12, async () => { installRendererConsoleCapture(); await initializeConsoleLogs(); bindMainConsoleStream(); updateConsoleControlLabels(); });
+        await runStartupStep("Initializing app console...", 8, async () => { installRendererConsoleCapture(); await initializeConsoleLogs(); bindMainConsoleStream(); updateConsoleControlLabels(); });
         await runStartupStep("Loading accounts...", 24, async () => { await loadAccounts(); renderAccounts(); updateAccountSelects(); updateStats(); });
         await runStartupStep("Loading settings...", 40, async () => { await loadSettings(); applySavedPrivateServerUrl(); renderAdvancedFflagOptions(); loadFFlags(); });
         await runStartupStep("Resolving Roblox install paths...", 54, async () => { await loadRobloxPathInfo(); await loadFontSettings(); });
@@ -144,6 +143,9 @@ async function init() {
 
         bindIpcListeners();
         initUpdateListeners();
+
+        // Check for updates AFTER handlers are registered (fire & forget, don't block startup)
+        setTimeout(() => { checkForUpdates(); }, 1000);
 
         if (startupErrors.length > 0) showNotification(`Startup completed with ${startupErrors.length} issue(s). Check Console tab for details.`, "warning");
     } finally {

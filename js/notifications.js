@@ -71,7 +71,15 @@ function initUpdateListeners() {
 async function checkForUpdates() {
     showNotification("Checking for updates...", "info");
     try {
-        const result = await ipcRenderer.invoke("check-hot-update");
+        // Timeout ensures the UI never hangs if IPC handler isn't registered or is slow
+        const CHECK_TIMEOUT_MS = 15000;
+        const result = await Promise.race([
+            ipcRenderer.invoke("check-hot-update"),
+            new Promise((_, reject) => setTimeout(
+                () => reject(new Error("Update check timed out")),
+                CHECK_TIMEOUT_MS,
+            )),
+        ]);
         if (result.updateAvailable) {
             if (result.error) {
                 showNotification("Update available but can't auto-apply: " + result.error, "warning");

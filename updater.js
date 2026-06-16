@@ -264,27 +264,31 @@ function sendToRenderer(channel, data) {
 
 function httpsGet(url, options = {}) {
     return new Promise((resolve, reject) => {
-        const urlObj = new URL(url);
-        const reqOptions = {
-            hostname: urlObj.hostname,
-            path: urlObj.pathname + urlObj.search,
-            headers: {
-                "User-Agent": "TiRex-RM-Updater",
-                ...options.headers,
-            },
-        };
+        const timeoutMs = options.timeout || 15000;
+        const maxRedirects = options.maxRedirects || 5;
+        let redirectCount = 0;
 
         const doRequest = (reqUrl) => {
+            if (redirectCount > maxRedirects) {
+                reject(new Error(`Too many redirects (${maxRedirects})`));
+                return;
+            }
+
             const u = new URL(reqUrl);
             const opts = {
                 hostname: u.hostname,
                 path: u.pathname + u.search,
-                headers: reqOptions.headers,
+                headers: {
+                    "User-Agent": "TiRex-RM-Updater",
+                    ...options.headers,
+                },
             };
 
-            https.get(opts, (res) => {
+            const req = https.get(opts, (res) => {
                 // Follow redirects
                 if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307) {
+                    res.resume();
+                    redirectCount++;
                     doRequest(res.headers.location);
                     return;
                 }
@@ -298,7 +302,12 @@ function httpsGet(url, options = {}) {
                 res.on("data", (chunk) => chunks.push(chunk));
                 res.on("end", () => resolve(Buffer.concat(chunks)));
                 res.on("error", reject);
-            }).on("error", reject);
+            });
+
+            req.setTimeout(timeoutMs, () => {
+                req.destroy(new Error(`Request timed out after ${timeoutMs}ms`));
+            });
+            req.on("error", reject);
         };
 
         doRequest(url);
@@ -311,7 +320,16 @@ function httpsGetJson(url) {
 
 function downloadWithProgress(url, destPath, headers = {}) {
     return new Promise((resolve, reject) => {
+        const timeoutMs = 60000;
+        const maxRedirects = 5;
+        let redirectCount = 0;
+
         const doRequest = (requestUrl) => {
+            if (redirectCount > maxRedirects) {
+                reject(new Error(`Too many redirects (${maxRedirects})`));
+                return;
+            }
+
             const u = new URL(requestUrl);
             const reqOptions = {
                 hostname: u.hostname,
@@ -322,8 +340,10 @@ function downloadWithProgress(url, destPath, headers = {}) {
                 },
             };
 
-            https.get(reqOptions, (res) => {
+            const req = https.get(reqOptions, (res) => {
                 if (res.statusCode === 301 || res.statusCode === 302 || res.statusCode === 307) {
+                    res.resume();
+                    redirectCount++;
                     doRequest(res.headers.location);
                     return;
                 }
@@ -360,7 +380,12 @@ function downloadWithProgress(url, destPath, headers = {}) {
                     fileStream.close();
                     reject(err);
                 });
-            }).on("error", reject);
+            });
+
+            req.setTimeout(timeoutMs, () => {
+                req.destroy(new Error(`Download timed out after ${timeoutMs}ms`));
+            });
+            req.on("error", reject);
         };
 
         doRequest(url);

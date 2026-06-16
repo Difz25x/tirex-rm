@@ -1,6 +1,6 @@
 {
   "name": "tirex-rm",
-  "version": "1.4.0",
+  "version": "1.6.0",
   "main": "main.js",
   "homepage": "./",
   "repository": {
@@ -12,7 +12,7 @@
   },
   "author": "Difz25x",
   "license": "MIT",
-  "description": "Roblox Manager v1.4.0",
+  "description": "Roblox Manager v1.5.0",
   "scripts": {
     "start": "npx electron .",
     "build:win": "npx electron-builder --win --x64 --publish never",

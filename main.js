@@ -7888,6 +7888,10 @@ function createWindow() {
         rendererFallbackUsed = false;
     });
 
+    // Register IPC handlers BEFORE loading the renderer
+    // to prevent race where renderer calls checkForUpdates() before handlers exist
+    setupHotUpdater(mainWindow);
+
     void loadRenderer(currentRendererPath);
     mainWindow.on("ready-to-show", async () => {
         mainWindow.show();
@@ -7904,7 +7908,6 @@ function createWindow() {
         // Send settings to renderer
         mainWindow.webContents.send('settings-loaded', appSettings);
 
-        setupHotUpdater(mainWindow);
         setGuardStatus(
             "stopped",
             "Standby mode: guard starts automatically when multi-instance launch is requested",
